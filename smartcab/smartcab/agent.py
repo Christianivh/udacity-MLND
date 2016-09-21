@@ -13,21 +13,7 @@ class LearningAgent(Agent):
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
         # TODO: Initialize any additional variables here
-        # nine possible states of smartcab based on decision tree
-        #
-        '''
-        self.possible_states = [
-            'Red Light - Next waypoint NOT right',
-            'Red Light - Next waypoint right - Clear on the left',
-            'Red Light - Next waypoint right - NOT clear on the left - left car NOT going forward',
-            'Red Light - Next waypoint right - NOT clear on the left - left car is going forward',
-            'Green Light - Next waypoint right',
-            'Green Light - Next waypoint forward',
-            'Green Light - Next waypoint left - Clear oncoming',
-            'Green Light - Next waypoint left - NOT clear oncoming - oncoming car turning left',
-            'Green Light - Next waypoint left - NOT clear oncoming - oncoming car NOT turning left'
-        ]
-        '''
+        # nine possible states of smartcab based on decision tree, initialized and updated automatically
 
         # four possible actions
         self.possible_actions = [None, 'left', 'right', 'forward']
@@ -73,9 +59,10 @@ class LearningAgent(Agent):
         '''
         Decay rate for alpha and epsilon
         '''
-        if t == 0:
-            return 1
-        return 1 / float(t)
+        # use constant values for raw search of optimal parameters
+        return 1.0
+        # use decay over time for fine search of optimal parameters
+        #return 1.0 / (1.0 + t)
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
@@ -132,7 +119,7 @@ class LearningAgent(Agent):
         self.total_reward += reward
         self.sim_time += 1
 
-def run(alpha=0.1, gamma=0.1, epsilon=1.0, n_trials=100):
+def run(alpha=1.0, gamma=1.0, epsilon=1.0, n_trials=100):
     """Run the agent for a finite number of trials."""
 
     # Set up environment and agent
@@ -160,32 +147,39 @@ def search_parameters():
     alphas = np.arange(0, 1.1, 0.1)
     gammas = np.arange(0, 1.1, 0.1)
     epsilons = np.arange(0, 1.1, 0.1)
-    #epsilons = [1.0]
+    #epsilons = [0.01]
     results = []
     best_result = (0, 0)
     best_parameters= (0, 0, 0)
     result = (0, 0)
     parameters = (0, 0, 0)
-    learning_routes = []
+    searching_path = []
     for alpha in alphas:
         for gamma in gammas:
             for epsilon in epsilons:
-                result = run(alpha=alpha, gamma=gamma, epsilon=epsilon, n_trials=1)
+                result = run(alpha=alpha, gamma=gamma, epsilon=epsilon, n_trials=10)
                 parameters = (alpha, gamma, epsilon)
                 results.append([result[0], result[1], parameters[0], parameters[1], parameters[2], result[2]])
                 if (result[0] > best_result[0] or
                     (result[0] == best_result[0] and result[1] < best_result[1])):
                     best_result = result
                     best_parameters = parameters
-                    learning_routes.append(results[-1])
+                    searching_path.append(results[-1])
+    print "\n**Results**"
+    print "success ratio | percentile time | alpha | gamma | epsilon | final_epsilon"
+    print "---|---|---|---|---|---"
+    for r in results:
+        print "{:.3} | {:.3} | {:.3} | {:.3} | {:.3} | {:.3}".format(*r)
+
     print "\n**Searching Path**"
     print "success ratio | percentile time | alpha | gamma | epsilon | final_epsilon"
-    print "---|---|---|---|---"
-    for r in learning_routes:
+    print "---|---|---|---|---|---"
+    for r in searching_path:
         print "{:.3} | {:.3} | {:.3} | {:.3} | {:.3} | {:.3}".format(*r)
+
     print "\n**Best Result**"
     print "success ratio | percentile time | alpha | gamma | epsilon | final_epsilon"
-    print "---|---|---|---|---"
+    print "---|---|---|---|---|---"
     print "{:.3} | {:.3} | {:.3} | {:.3} | {:.3} | {:.3}".format(best_result[0], best_result[1],
                                                                  best_parameters[0], best_parameters[1], best_parameters[2],
                                                                  best_result[2])
