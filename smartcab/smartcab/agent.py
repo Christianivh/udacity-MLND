@@ -15,6 +15,7 @@ class LearningAgent(Agent):
         # TODO: Initialize any additional variables here
         # nine possible states of smartcab based on decision tree
         #
+        '''
         self.possible_states = [
             'Red Light - Next waypoint NOT right',
             'Red Light - Next waypoint right - Clear on the left',
@@ -26,13 +27,13 @@ class LearningAgent(Agent):
             'Green Light - Next waypoint left - NOT clear oncoming - oncoming car turning left',
             'Green Light - Next waypoint left - NOT clear oncoming - oncoming car NOT turning left'
         ]
+        '''
 
         # four possible actions
         self.possible_actions = [None, 'left', 'right', 'forward']
 
         # initialize Q-Table
-        self.q_table = {state:{action:0 for action in self.possible_actions} for state in self.possible_states}
-
+        self.q_table = {}
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -46,107 +47,90 @@ class LearningAgent(Agent):
         # used time in percentage of deadline, 1.0 on failure
         self.percentile_time = []
 
+    def get_state(self):
+        '''
+        get current states
+        '''
+        self.next_waypoint = self.planner.next_waypoint()
+        inputs = self.env.sense(self)
+        return (self.next_waypoint, inputs['light'], inputs['oncoming'], inputs['left'], inputs['right'])
+
+    def get_max_utility_action(self, qtable, s):
+        '''
+        choose the action with highest score in q table
+        '''
+        tmp = [qtable[(s, x)] for x in self.possible_actions]
+        maxQ = max(tmp)
+        count = tmp.count(maxQ)
+        if count > 1:
+            best = [i for i in range(len(self.possible_actions)) if tmp[i] == maxQ]
+            i = random.choice(best)
+        else:
+            i = tmp.index(maxQ)
+        return self.possible_actions[i]
+
+    def get_decay_rate(self, t):
+        '''
+        Decay rate for alpha and epsilon
+        '''
+        if t == 0:
+            return 1
+        return 1 / float(t)
+
     def reset(self, destination=None):
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
-
-        # reset
-        self.previous_state = self.possible_states[0]
-        self.previous_action = None
-        self.previous_reward = 0
         # reset deadline and success state for new trail
         self.deadline_start = 0
         self.success.append(0)
         self.percentile_time.append(1.0)
 
     def update(self, t):
-        # Gather inputs
-        self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
-        inputs = self.env.sense(self)
-        deadline = self.env.get_deadline(self)
-
-        if deadline > self.deadline_start:
-            self.deadline_start = deadline
+        #
+        self.alpha *= self.get_decay_rate(t)
+        self.epsilon *= self.get_decay_rate(t)
 
         # TODO: Update state
-        if inputs['light'] == 'red':
-            if self.next_waypoint != 'right':
-                self.state = self.possible_states[0]
-            else:
-                if inputs['left'] == None:
-                    self.state = self.possible_states[1]
-                else:
-                    if inputs['left'] != 'forward':
-                        self.state = self.possible_states[2]
-                    else:
-                        self.state = self.possible_states[3]
-        else:
-            if self.next_waypoint == 'right':
-                self.state = self.possible_states[4]
-            elif self.next_waypoint == 'forward':
-                self.state = self.possible_states[5]
-            else:
-                if inputs['oncoming'] == None:
-                    self.state = self.possible_states[6]
-                else:
-                    if inputs['oncoming'] == 'left':
-                        self.state = self.possible_states[7]
-                    else:
-                        self.state = self.possible_states[8]
+        self.current_state = self.get_state()
+
+        # initialize deadline_start for new trial
+        deadline = self.env.get_deadline(self)
+        if deadline > self.deadline_start:
+            self.deadline_start = deadline
+        # initialize Q Table
+        for action in self.possible_actions:
+            if (self.current_state, action) not in self.q_table:
+                self.q_table[(self.current_state, action)] = 0.0
 
         # TODO: Select action according to your policy
-        # Epsilon greedy learning
-        if self.sim_time < 1500:
-            self.epsilon = 0.02
-        else:
-            self.epsilon = 0.0
-#        self.epsilon = 0.02 / log(self.sim_time + 2)
-#        self.epsilon = 0.9 / (1 + self.sim_time / 10)
-#        self.epsilon = 0.5
-
-        # choose random move is occasionally
-        random_move = np.random.choice([1,0],p=[self.epsilon,1-self.epsilon])
-        if random_move == 1:
-            action_choose = random.choice(self.q_table[self.state].keys())
-            action = action_choose
-        # if an epsilon random move is not chosen
-        else:
-            # choose random move if all Q values are identical for each action
-            if self.q_table[self.state][self.possible_actions[0]] \
-                == self.q_table[self.state][self.possible_actions[1]] \
-                == self.q_table[self.state][self.possible_actions[2]] \
-                == self.q_table[self.state][self.possible_actions[3]]:
-                action_choose = random.choice(self.q_table[self.state].keys())
-                action = action_choose
-            # else choose the action with highest Q value
-            else:
-                action_choose =  max(self.q_table[self.state].iterkeys(), key=(lambda key: self.q_table[self.state][key]))
-                action = action_choose
+        if random.random() < self.epsilon:    # explore
+            action = random.choice(self.possible_actions)
+        else: # exploitation
+            action = self.get_max_utility_action(self.q_table, self.current_state)
 
         # Execute action and get reward
         reward = self.env.act(self, action)
-        self.total_reward += reward
+        # new state after taking action
+        self.next_state = self.get_state()
 
         # Reach destination, get success counter and used time in percentage
         if self.env.agent_states[self]['location'] == self.env.agent_states[self]['destination']:
             self.success[-1] = 1
             used_time = 1.0 * (self.deadline_start-deadline) / self.deadline_start
             self.percentile_time[-1] = used_time
+        # otherwise learn and update q table
+        else:
+            # update q table entry
+            for a in self.possible_actions:
+                if (self.next_state, a) not in self.q_table:
+                    self.q_table[(self.next_state,a)] = 0.0
+            # TODO: Learn policy based on state, action, reward
+            next_action = self.get_max_utility_action(self.q_table, self.next_state)
+            change = self.alpha * (reward + self.gamma * self.q_table[(self.next_state, next_action)])
+            self.q_table[(self.current_state, action)] = self.q_table[(self.current_state, action)] * (1 - self.alpha) + change
 
-        # TODO: Learn policy based on state, action, reward
-        # Update the Q-table values, using the formula provided in the Reinforcement Learning lecture series
-        self.q_table[self.previous_state][self.previous_action] = (1-self.alpha) * self.q_table[self.previous_state][self.previous_action] + self.alpha * (self.previous_reward + self.gamma * self.q_table[self.state][action_choose])
-
-        # Update the 'old' state, action and reward before looping back to the next move
-        self.previous_state = self.state
-        self.previous_action = action_choose
-        self.previous_reward = reward
+        self.total_reward += reward
         self.sim_time += 1
-
-        # print the Q-table, for visualization and troubleshooting purposes
-        #print "Q-TABLE:",self.q_table
-        #print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
-
 
 def run(alpha=0.1, gamma=0.1, epsilon=1.0, n_trials=100):
     """Run the agent for a finite number of trials."""
@@ -175,8 +159,8 @@ def search_parameters():
     '''
     alphas = np.arange(0, 1.1, 0.1)
     gammas = np.arange(0, 1.1, 0.1)
-    #epsilons = np.arange(0, 1.1, 0.1)
-    epsilons = [1.0]
+    epsilons = np.arange(0, 1.1, 0.1)
+    #epsilons = [1.0]
     results = []
     best_result = (0, 0)
     best_parameters= (0, 0, 0)
@@ -186,7 +170,7 @@ def search_parameters():
     for alpha in alphas:
         for gamma in gammas:
             for epsilon in epsilons:
-                result = run(alpha=alpha, gamma=gamma, epsilon=epsilon, n_trials=100)
+                result = run(alpha=alpha, gamma=gamma, epsilon=epsilon, n_trials=1)
                 parameters = (alpha, gamma, epsilon)
                 results.append([result[0], result[1], parameters[0], parameters[1], parameters[2], result[2]])
                 if (result[0] > best_result[0] or
