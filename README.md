@@ -15,5 +15,5 @@ Exploratory Project | [Titanic Survival Exploration](./titanic_survival_explorat
 Model Evaluation and Validation | [Predicting Boston Housing Prices](./boston_housing) | data reprocessing, learning algorithms training and evaluation, grid search | Done
 Supervised Learning | [Build a Student Intervention System](./student_intervention) | comparison of supervised classification learning algorithms, parameters optimization using grid search | Done
 Unsupervised Learning | [Creating Customer Segments](./creating_customer_segments) | data preprocessing, features PCA, data clustering, interpret clusters | Done
-Reinforcement Learning | [Train a Smartcab to Drive]((./smartcab)) | reenforced learning with Q Learning algorithms | Done
-Machine Learning Specializations | Capstone Project | - | -
+Reinforcement Learning | [Train a Smartcab to Drive](./smartcab) | reenforcement learning with Q Learning algorithms | Done
+Machine Learning Specializations | [Capstone Project](./capstone) | reviewing ML skills and tools | Done
