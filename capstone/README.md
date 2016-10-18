@@ -32,4 +32,5 @@ cifar10
 - copy files in `cifar10/codes` to `caffe/examples/cifar10` directory
 - update local path configurations in notebooks
 - run `CIFAR10_explore.ipynb` and `CIFAR10_CNN_Caffe.ipynb`
+- use `pandoc -o project_report.pdf project_report.md -V geometry:margin=0.75in` to generate report
 - Codes and notes from references must follow original license, Others MIT
