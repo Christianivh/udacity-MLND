@@ -246,7 +246,7 @@ snapshot_prefix: "examples/cifar10/cifar10_full"
 solver_mode: GPU
 ```
 
-- Network hyperparameters  
+- Network hyperparameters
 For ConvNet, the main hyperparameters to be tuned are within the first three convolution layers. After test runs on three different learning policies fixed, step, and multistep, the original strategy of ConvNet seems to be the best one. So we will keep the multistep policy, and let the learning rate decrease by factor of 0.1 at 60k and 65k steps.
 
 #### CNN With Dropout
@@ -262,7 +262,7 @@ The ConvNet with dropout share the same convolution layers as ConvNet, so we wil
 To fine tune pre-trained Caffenet, we will modify its net strucutre and solver.
 For CNN net prototxt, the name of last FC layer is changed to avoid using Caffenet weights, its output depth is set to the number of CIFAR labels. The database sources are modified accordingly.
 For solver protoxt, we load the weights of Caffenet model, and decrease its base learning rate as the pre-trained model should already have good performance on new datasets.
-We also make some modification due to computation consideration, for example, using a subset of CIFAR10 (10k training images, 2k testing images), smaller data batch size and less training iteration.
+We also make some compromises due to computation limitation, for example, using a subset of CIFAR10 (10k training images, 2k testing images), smaller data batch size and less training iteration. The original CIFAR10 datasets have 60k images of ~200MB space and memory, while 12k resized CIFAR10 for CaffeNet take ~3GB space and memory, which is stressful to run on a GPU instance with 4GB vRAM.
 
 ![CIFAR10 Caffenet fine-tuning diagram](./results/cifar10_caffenet_train_test.png){width=640}
 
