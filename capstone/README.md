@@ -6,7 +6,7 @@
 ### Outline
 ```
 cifar10
-├── read.md
+├── READ.md
 ├── project_report.pdf
 ├── codes/                       # Caffe training model, configuration and scripts
 │   ├── CIFAR10_explore.ipynb    # CIFAR10 data exploration (visualization, linear classifier, MPL)

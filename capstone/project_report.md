@@ -20,7 +20,7 @@ Image classification, or image recognition, is one core problem in computer visi
 #### Convolutional Neural Network
 Currently, the best algorithms for such tasks are based on Convolutional Neural Network. Performance of CNN on the ImageNet tests, is now close to that of humans. Its rapid development lies in the vast utilization of GPU and [large image datasets](https://en.wikipedia.org/wiki/List_of_datasets_for_machine_learning_research#Image_data). There are successful applications in image recognition, natural language processing, and playing [computer Go](https://en.wikipedia.org/wiki/Computer_Go), as well as popular frameworks such as Caffe and TensorFlow.
 
-A convolutional neural network (CNN, or ConvNet) is a type of feed-forward artificial neural network in which the connectivity pattern between its neurons is inspired by the organization of the animal visual cortex. It mitigate the challenges posed by the simple Artificial Neural Network such as MLP by exploiting the strong spatially local correlation present in natural images. It feautures a 3D volumes of neurons of multiple layered structure, especially the convolutional layers with shared local filters and the pooling layers.
+A convolutional neural network (CNN, or ConvNet) is a type of feed-forward artificial neural network in which the connectivity pattern between its neurons is inspired by the organization of the animal visual cortex. It mitigate the challenges posed by the simple Artificial Neural Network such as MLP by exploiting the strong spatially local correlation present in natural images. It features a 3D volumes of neurons of multiple layered structure, especially the convolutional layers with shared local filters and the pooling layers.
 
 
 ![Typical CNN structure [2]](./results/wikipedia_typical_cnn_structure.png){width=480}
@@ -66,13 +66,13 @@ data | batch_label	| data | filenames | labels
 #### Metrics
 Two scores are used to evaluate the algorithms, accuracy and loss function.
 
-The main reason we use accuracy is that we are mostly intersted in the correctness of prediction, rather than the precision, recall, or more complicated F1 score. Moreover, this is also the most common choice of large image datasets challenges such as MNIST and ImageNet [8], which will make it easier for comparison. Error rate is also popular, but we consider it equivalent to accuracy since their summation is always 1. Finally, the accuracy can be easily integrated into Caffe at the top layer. Because of these reasons, accuracy is choosen as one of the metrics. It is defined by number of true positives divided by total number of testing samples.
+The main reason we use accuracy is that we are mostly interested in the correctness of prediction, rather than the precision, recall, or more complicated F1 score. Moreover, this is also the most common choice of large image datasets challenges such as MNIST and ImageNet [8], which will make it easier for comparison. Error rate is also popular, but we consider it equivalent to accuracy since their summation is always 1. Finally, the accuracy can be easily integrated into Caffe at the top layer. Because of these reasons, accuracy is choosen as one of the metrics. It is defined by number of true positives divided by total number of testing samples.
 
 $$Accuracy = \frac{N_{true\ positive}}{N_{test\ samples}}$$
 
-Softmax loss is used in the top layer of CNN, for the convinience of its probaility intepretation, namely, the category with highest probability should be the predicted label. It will enable us to better understand the prediction process of the classifier than using SVM loss or sigmoid loss.
+Softmax loss is used in the top layer of CNN, for the convenience of its probability interpretation, namely, the category with highest probability should be the predicted label. It will enable us to better understand the prediction process of the classifier than using SVM loss or sigmoid loss.
 
-The Softmax function is the generalization of binary Logistric function to multiple classes, it gives normalized class probabilities and can be intepreted as the probabilities of each label given the image and weights. Softmax function takes a vector of arbitrary real-valued scores in $z$ and squashes it to a vector of values between zero and one that sum to one.
+The Softmax function is the generalization of binary Logistric function to multiple classes, it gives normalized class probabilities and can be interpreted as the probabilities of each label given the image and weights. Softmax function takes a vector of arbitrary real-valued scores in $z$ and squashes it to a vector of values between zero and one that sum to one.
 $$ f_j(z) = \frac{e^{z_j}} {\sum_k e^{z_k}} $$
 
 The full loss for the dataset is the mean of $L_i$ over all training examples together with a regularization term.
@@ -108,7 +108,7 @@ Describing the similarity of images with only two features is a none-trivial tas
 
 We can use a visualization technique called [t-SNE](https://lvdmaaten.github.io/tsne/) to take the CIFAR-10 images and embed them in two dimensions so that their local pairwise distances are best preserved, namely the nearby images share more similar features. The clustering becomes more obvious as we can see pictures forming heat map like zones and even overlapping with each other.
 
-![CIFAR10 2D feature maps of 1000 images embeded](./results/cifar10_tsne_images.jpg){width=320}
+![CIFAR10 2D feature maps of 1000 images embedded](./results/cifar10_tsne_images.jpg){width=320}
 
 #### Test run on linear classifier
 For introduction, we first implement simple linear classifier using `sklearn`, and run it on test datasets.
@@ -148,7 +148,7 @@ ReLU is the abbreviation of Rectified Linear Units. This is a layer of neurons t
 ##### Fully Connected Layer
 After several convolutional and max pooling layers, the high-level reasoning in the neural network is done via fully connected layers. Neurons in a fully connected layer have full connections to all activations in the previous layer, as seen in regular Neural Networks. Their activations can hence be computed with a matrix multiplication followed by a bias offset.
 
-#### Droput Layer
+#### Dropout Layer
 Dropout is an extremely effective, simple and recently introduced regularization technique that complements the other methods (L1, L2, maxnorm) [4]. While training, dropout is implemented by only keeping a neuron active with some probability, or setting it to zero otherwise.
 
 ##### Loss Layer
@@ -169,14 +169,14 @@ The solver orchestrates model optimization by coordinating the network’s forwa
 We will use the default solver Stochastic Gradient Descent, tuning the hyperparameters learning policy and related parameters.
 
 ##### Defining Models
-The models are defined in plaintext protocol buffer schema (`prototxt`) while the learned models are serialized as binary protocol buffer `.caffemodel` files following Google Protocol Buffer. It enables us to directly load and fine tune a pretrained CNN, which will greatly reduce the training cost and improve efficiency.
+The models are defined in plaintext protocol buffer schema (`prototxt`) while the learned models are serialized as binary protocol buffer `.caffemodel` files following Google Protocol Buffer. It enables us to directly load and fine tune a pre-trained CNN, which will greatly reduce the training cost and improve efficiency.
 We will use the [Caffenet](https://github.com/BVLC/caffe/tree/master/models/bvlc_reference_caffenet) model comes with [Caffe Model Zoo](https://github.com/BVLC/caffe/wiki/Model-Zoo) framework of Caffe.
 
 #### Environment
 The study of this problem is performed on a Ubuntu 14.04 GPU instance of AWS EC2, with NVIDIA CUDA 7.5 and Caffe.
 
 ## III. Methodology
-In this section, we show the process of trainning CNN with Caffe. We'll highlight how to improve CNN performance with two optimized methods, namely the dropout and fine tuning pre-trained network.
+In this section, we show the process of training CNN with Caffe. We'll highlight how to improve CNN performance with two optimized methods, namely the dropout and fine tuning pre-trained network.
 
 ### 3.1 Data Preprocessing
 To improve the performance of file IO and memory access, Caffe load data from database and compute data in binary blobs. We will need to convert pickled CIFAR10 python batch to `leveldb`.
@@ -200,7 +200,7 @@ Caffe data augmentation can be performed on the fly automatically in data layer.
 With Caffe's powerful framework, we can define and train CNN by writing network and solver `.prototxt` files. Most of challenges lie in matching the layered structures and their dimensions.
 
 #### Convnet
-We will start with [Caffe implmentation](http://caffe.berkeleyvision.org/gathered/examples/cifar10.html) of Alex Krizhevsky’s cuda-convnet.
+We will start with [Caffe implementation](http://caffe.berkeleyvision.org/gathered/examples/cifar10.html) of Alex Krizhevsky’s cuda-convnet.
 
 - Network structure
 ``` text
@@ -292,7 +292,7 @@ We also show how the improvement of CNN with dropout and fine-tuning pre-trained
 Thus we have shown that the study clearly demonstrate how to design, train, and improve CNN for CIFAR10 image classification task.
 
 Accuracy | Method | Venue
----------- | ------------------------------------------------------------------ | ------------------
+---------- | ------------------------------------------------------------ | ------------------------
 96.53% | [Fractional Max-Pooling](http://arxiv.org/abs/1412.6071) | arXiv 2015
 94% | [Lessons learned from manually classifying CIFAR-10](http://karpathy.github.io/2011/04/27/manually-classifying-cifar10/)| unpublished 2011 |
 90.68% | [Regularization of Neural Networks using DropConnect](http://cs.nyu.edu/~wanli/dropc/) |	ICML 2013
@@ -315,8 +315,8 @@ By changing the last layer of CaffeNet from loss layer to Softmax classifier, we
 
 1. Good prediction: for picture representing the label nicely, CNN is confident about the result with probability ~99%.
 2. Positive prediction: CNN gives right prediction but the probability is in range [0.6, 0.9], especially when the picture is vague.
-3. False prediction: it seems that CNN failed to capture the pattern deer and believes that it's a bird due to some local similarity.
-4. Underfitting: CNN couldn't tell the difference between a SUV and truck, but seems to know it's a vechile, which may be improved by more training samples.
+3. False prediction: it seems that CNN fail to capture the pattern deer and believes that it's a bird due to some local similarity.
+4. Underfitting: CNN can't tell the difference between a SUV and truck, but seems to know it's a vehicle, which may be improved by using more training samples.
 
 ----------------------------------------------------------------- ----------------------------------------------------------------------
 ![](./results/cifar10_caffenet_image_true_ship.png){width=50%}    ![](./results/cifar10_caffenet_image_true_cat.png){width=50%}
